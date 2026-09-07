@@ -20,14 +20,10 @@ output "istio" {
 }
 
 output "kserve" {
-  description = "Outputs of the active KServe component (components, provides, requires). In serverless mode this is the Knative-backed kserve component; in standard mode it is the standalone kserve-controller."
-  value = local.serverless ? {
-    components = module.kserve[0].components
-    provides   = module.kserve[0].provides
-    requires   = module.kserve[0].requires
-    } : {
-    components = module.kserve_controller[0].components
-    provides   = module.kserve_controller[0].provides
-    requires   = module.kserve_controller[0].requires
+  description = "Outputs of the KServe component (components, provides, requires). Knative apps are present only in serverless mode."
+  value = {
+    components = module.kserve.components
+    provides   = module.kserve.provides
+    requires   = module.kserve.requires
   }
 }

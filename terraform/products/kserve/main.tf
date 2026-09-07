@@ -55,26 +55,40 @@ module "istio_ambient" {
   }
 }
 
-# KServe control plane with Knative (serverless) serving. Reuses the Charmed
-# Kubeflow Solutions component. Knative is deployed because gateway_info is set
-# (sidecar mode). This product intentionally omits the LLM serving charms.
+# KServe control plane. Reuses the Charmed Kubeflow Solutions component for both
+# modes: Knative is deployed only when gateway_info is set (serverless/sidecar);
+# standard mode passes gateway_metadata + service_mesh (ambient) instead, so no
+# Knative is deployed. This product intentionally omits the LLM serving charms.
 module "kserve" {
-  count      = local.serverless ? 1 : 0
   source     = "git::https://github.com/canonical/charmed-kubeflow-solutions//terraform/components/kserve?ref=7cf3c85bde844a060ec985c1b3aa97c57d3fa3fc"
-  depends_on = [module.istio]
+  depends_on = [module.istio, module.istio_ambient]
 
   model_uuid = local.model_uuid
 
-  gateway_info = {
+  # serverless: istio-pilot gateway-info (also gates Knative deployment).
+  gateway_info = local.serverless ? {
     kind     = "endpoint"
     name     = module.istio[0].provides.istio_pilot_gateway_info.name
     endpoint = module.istio[0].provides.istio_pilot_gateway_info.endpoint
-  }
+  } : null
+
+  # standard: ambient istio-ingress-k8s gateway (Gateway API) + beacon mesh.
+  gateway_metadata = local.standard ? {
+    kind     = "endpoint"
+    name     = module.istio_ambient[0].provides.istio_ingress_k8s_gateway_metadata.name
+    endpoint = module.istio_ambient[0].provides.istio_ingress_k8s_gateway_metadata.endpoint
+  } : null
+
+  service_mesh = local.standard ? {
+    kind     = "endpoint"
+    name     = module.istio_ambient[0].provides.istio_beacon_k8s_service_mesh.name
+    endpoint = module.istio_ambient[0].provides.istio_beacon_k8s_service_mesh.endpoint
+  } : null
 
   kserve_controller = {
     channel  = var.kserve_channel
     revision = var.kserve_controller_revision
-    config   = merge({ "deployment-mode" = "knative" }, var.kserve_controller_config)
+    config   = merge({ "deployment-mode" = local.serverless ? "knative" : "standard" }, var.kserve_controller_config)
   }
 
   knative_operator = {
@@ -94,35 +108,5 @@ module "kserve" {
   knative_eventing = {
     channel  = var.knative_channel
     revision = var.knative_eventing_revision
-  }
-}
-
-# KServe control plane in standard (RawDeployment) mode. No Knative; the
-# controller joins the ambient mesh and is fronted by istio-ingress-k8s via the
-# Gateway API (gateway-metadata + service-mesh), so InferenceServices get
-# external ingress through an HTTPRoute.
-module "kserve_controller" {
-  count      = local.standard ? 1 : 0
-  source     = "../../components/kserve-controller"
-  depends_on = [module.istio_ambient]
-
-  model_uuid = local.model_uuid
-
-  kserve_controller = {
-    channel  = var.kserve_channel
-    revision = var.kserve_controller_revision
-    config   = merge({ "deployment-mode" = "standard" }, var.kserve_controller_config)
-  }
-
-  gateway_metadata = {
-    kind     = "endpoint"
-    name     = module.istio_ambient[0].provides.istio_ingress_k8s_gateway_metadata.name
-    endpoint = module.istio_ambient[0].provides.istio_ingress_k8s_gateway_metadata.endpoint
-  }
-
-  service_mesh = {
-    kind     = "endpoint"
-    name     = module.istio_ambient[0].provides.istio_beacon_k8s_service_mesh.name
-    endpoint = module.istio_ambient[0].provides.istio_beacon_k8s_service_mesh.endpoint
   }
 }

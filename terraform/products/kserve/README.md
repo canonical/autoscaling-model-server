@@ -28,15 +28,18 @@ repository has no tags). Standard mode additionally uses the local
 | Module | Mode | Source | Role |
 | --- | --- | --- | --- |
 | `istio` | serverless | `charmed-kubeflow-solutions//terraform/components/istio-sidecar` | Istio control plane + ingress gateway (sidecar). |
-| `kserve` | serverless | `charmed-kubeflow-solutions//terraform/components/kserve` | KServe control plane + Knative serving/eventing. |
 | `istio_ambient` | standard | `charmed-kubeflow-solutions//terraform/components/istio-ambient-dex` | Ambient mesh: istio-k8s + istio-ingress-k8s + istio-beacon-k8s. |
-| `kserve_controller` | standard | `../../components/kserve-controller` | Standalone kserve-controller (RawDeployment), no Knative. |
+| `kserve` | both | `charmed-kubeflow-solutions//terraform/components/kserve` | KServe control plane; Knative is deployed only when `gateway_info` is set (serverless). |
+
+The upstream `kserve` component is used for both modes — it deploys Knative only
+when `gateway_info` is provided, so standard mode (which passes `gateway_metadata`
++ `service_mesh` instead) gets `kserve-controller` alone.
 
 ## Product-level wiring
 
 - **serverless:** `istio-pilot:gateway-info` → `kserve-controller:ingress-gateway`
-  (via the `kserve` component, which also wires
-  `knative-serving:local-gateway` → `kserve-controller:local-gateway`).
+  (the `kserve` component also wires `knative-serving:local-gateway` →
+  `kserve-controller:local-gateway`).
 - **standard:** `istio-ingress-k8s:gateway-metadata` →
   `kserve-controller:gateway-metadata` and `istio-beacon-k8s:service-mesh` →
   `kserve-controller:service-mesh` (Gateway API ingress; no Knative).
@@ -69,7 +72,7 @@ gateway namespace).
 | `istio_default_gateway` | `string` | `"kserve-gateway"` | Istio gateway name shared with Knative. |
 | `istio_channel` | `string` | `"1.28/stable"` | Channel for the Istio charms. |
 | `knative_channel` | `string` | `"1.16/stable"` | Channel for the Knative charms. |
-| `kserve_channel` | `string` | `"0.17/stable"` | Channel for kserve-controller. |
+| `kserve_channel` | `string` | `"latest/edge"` | Channel for kserve-controller. |
 | `*_revision` | `number` | `null` | Optional per-charm revision pins. |
 | `kserve_controller_config` | `map(string)` | `{}` | Extra kserve-controller config merged over defaults. |
 
