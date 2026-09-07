@@ -21,7 +21,7 @@ SCENARIOS = {
     },
     "llm-cos": {
         "model": "kserve-llm",
-        "module_path": "terraform/tests/llm-cos",
+        "module_path": "terraform/deployments/llm-cos",
         "tf_vars": [],
     },
 }

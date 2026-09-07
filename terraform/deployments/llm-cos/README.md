@@ -1,10 +1,10 @@
-# llm-cos test scenario
+# llm-cos deployment
 
-Terraform root module used by the integration test suite for the **`llm-cos`**
-scenario. It deploys COS Lite in its own model and the LLM serving
-[`llm` product](../../products/llm) with observability enabled, wired to COS via
-cross-model offers. Mirrors the `kubeflow-cos` scenario in Charmed Kubeflow
-Solutions.
+Deployment root module (CC008 Deployment tier) that stands up the LLM serving
+stack together with COS Lite. It deploys COS Lite in its own model and the LLM
+serving [`llm` product](../../products/llm) with observability enabled, wired to
+COS via cross-model offers. Mirrors the `kubeflow-cos` scenario in Charmed
+Kubeflow Solutions, and is used by the integration suite's `llm-cos` scenario.
 
 The LLM serving stack is deployed into a **pre-created** model (referenced by
 `model_uuid`); the `cos` model is created by this module.
