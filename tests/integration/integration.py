@@ -60,4 +60,4 @@ def test_cos_relations_active(juju: jubilant.Juju, scenario):
         assert offer in saas, f"expected consumed offer {offer!r} not found in {list(saas)}"
         current = saas[offer].get("application-status", {}).get("current")
         logger.info("SAAS %s status: %s", offer, current)
-        assert current not in ("error", "blocked"), f"offer {offer} is {current}"
+        assert current == "active", f"offer {offer} is {current!r}, expected 'active'"

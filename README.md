@@ -3,12 +3,13 @@
 The autoscaling model serving solution deploys KServe on any Kubernetes cluster.
 It ships two product configurations:
 
-* **KServe serving** — Istio (sidecar) + Knative + KServe control plane. The
-  classic serverless serving stack, without the LLM charms.
+* **KServe serving** — the KServe control plane with a `kserve_mode` switch:
+  `serverless` (Istio sidecar + Knative) or `standard` (Istio ambient,
+  RawDeployment). No LLM charms.
 * **LLM serving** — Envoy Gateway + KServe LLM serving
-  (`kserve-controller` in standard mode, `kserve-llmisvc`, `lws-controller`).
-  No Knative/Istio. The end user then deploys `llm-integrator` (or applies
-  `LLMInferenceService` resources) to serve models.
+  (`kserve-controller` in standard mode, `kserve-llmisvc`, `lws-controller`),
+  with optional COS observability. No Knative/Istio. The end user then deploys
+  `llm-integrator` (or applies `LLMInferenceService` resources) to serve models.
 
 ## Install
 

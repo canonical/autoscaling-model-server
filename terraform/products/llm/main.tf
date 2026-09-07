@@ -4,8 +4,13 @@
 resource "juju_model" "llm" {
   count = var.create_model ? 1 : 0
   name  = var.model_name
-  cloud {
-    name = var.cloud
+
+  # Only set the cloud when provided; otherwise Juju uses its default cloud.
+  dynamic "cloud" {
+    for_each = var.cloud != null ? [var.cloud] : []
+    content {
+      name = cloud.value
+    }
   }
 }
 
@@ -44,7 +49,7 @@ module "kserve_llm" {
   kserve_controller = {
     channel  = var.kserve_channel
     revision = var.kserve_controller_revision
-    config   = merge({ "deployment-mode" = "standard" }, var.kserve_controller_config)
+    config   = var.kserve_controller_config
   }
   kserve_llmisvc = {
     channel  = var.kserve_channel

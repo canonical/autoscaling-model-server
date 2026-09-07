@@ -4,11 +4,33 @@ on:
   workflow_call:
 
 jobs:
-  terraform-checks:
-    name: Terraform
-    uses: canonical/charmed-kubeflow-workflows/.github/workflows/terraform-checks-solution.yaml@main
-    with:
-      module-path: terraform/
+  terraform-lint:
+    name: Terraform fmt & tflint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo snap install terraform --classic
+      - run: sudo snap install tflint
+      - run: terraform fmt -check -recursive terraform/
+      - run: cd terraform && tflint --recursive
+
+  terraform-validate:
+    name: Terraform validate
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each root module is validated separately: after removing the flat
+        # module, terraform/ has no root .tf files of its own.
+        module:
+          - terraform/products/kserve
+          - terraform/products/llm
+          - terraform/deployments/llm-cos
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo snap install terraform --classic
+      - run: terraform -chdir=${{ matrix.module }} init -backend=false
+      - run: terraform -chdir=${{ matrix.module }} validate
 
   lint:
     name: Linting

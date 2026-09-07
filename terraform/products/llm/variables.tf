@@ -21,7 +21,7 @@ variable "model_uuid" {
 }
 
 variable "cloud" {
-  description = "Kubernetes cloud to create the model on when var.create_model is true"
+  description = "Kubernetes cloud to create the model on when var.create_model is true. Leave null to use Juju's default cloud."
   type        = string
   nullable    = true
   default     = null

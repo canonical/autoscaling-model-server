@@ -9,8 +9,8 @@ product configurations:
 
 | Product | Path | What it deploys |
 | --- | --- | --- |
-| **KServe serving** | [`products/kserve`](products/kserve) | Istio (sidecar) + Knative + KServe control plane. No LLM charms. |
-| **LLM serving** | [`products/llm`](products/llm) | Envoy Gateway + KServe LLM serving (`kserve-controller` standard, `kserve-llmisvc`, `lws-controller`). No Knative/Istio. |
+| **KServe serving** | [`products/kserve`](products/kserve) | KServe control plane with a `kserve_mode` switch: `serverless` (Istio sidecar + Knative) or `standard` (Istio ambient, RawDeployment). No LLM charms. |
+| **LLM serving** | [`products/llm`](products/llm) | Envoy Gateway + KServe LLM serving (`kserve-controller` standard, `kserve-llmisvc`, `lws-controller`), with optional COS observability. |
 
 ## Layout
 
@@ -18,14 +18,17 @@ product configurations:
 terraform/
 ├── components/
 │   ├── envoy/         # Envoy Gateway stack (local, inline; service-mesh charms)
-│   └── kserve-llm/    # kserve-controller (standard) + kserve-llmisvc + lws-controller
-└── products/
-    ├── kserve/        # reuses charmed-kubeflow-solutions istio-sidecar + kserve
-    └── llm/           # composes the envoy + kserve-llm components
+│   ├── kserve-llm/    # kserve-controller (standard) + kserve-llmisvc + lws-controller
+│   └── observability/ # opentelemetry-collector-k8s + COS offers
+├── products/
+│   ├── kserve/        # serverless (sidecar+knative) OR standard (ambient); reuses kubeflow components
+│   └── llm/           # composes the envoy + kserve-llm (+ observability) components
+└── deployments/
+    └── llm-cos/       # deployment root: cos-lite + the llm product wired to COS
 ```
 
-- The **`kserve`** product reuses the `istio-sidecar` and `kserve` components
-  from [Charmed Kubeflow
+- The **`kserve`** product reuses the `istio-sidecar`, `istio-ambient-dex` and
+  `kserve` components from [Charmed Kubeflow
   Solutions](https://github.com/canonical/charmed-kubeflow-solutions), pinned to
   a commit (the upstream repository has no tags).
 - The **`envoy`** component is local because the

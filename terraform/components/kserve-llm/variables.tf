@@ -8,7 +8,7 @@ variable "model_uuid" {
 }
 
 variable "kserve_controller" {
-  description = "Configuration for the kserve-controller application"
+  description = "Configuration for the kserve-controller application. deployment-mode is always forced to standard (this component ships no Knative)."
   type = object({
     app_name    = optional(string, "kserve-controller")
     channel     = optional(string, "latest/edge")
@@ -16,7 +16,7 @@ variable "kserve_controller" {
     units       = optional(number, 1)
     trust       = optional(bool, true)
     constraints = optional(string, "arch=amd64")
-    config      = optional(map(string), { "deployment-mode" = "standard" })
+    config      = optional(map(string), {})
     resources   = optional(map(string), {})
   })
   default = {}
@@ -68,7 +68,17 @@ variable "gateway_metadata" {
   default  = null
 
   validation {
-    condition     = var.gateway_metadata == null ? true : contains(["endpoint", "offer"], var.gateway_metadata.kind)
+    condition     = var.gateway_metadata == null || contains(["endpoint", "offer"], var.gateway_metadata.kind)
     error_message = "gateway_metadata.kind must be either \"endpoint\" or \"offer\"."
+  }
+
+  validation {
+    condition     = var.gateway_metadata == null || var.gateway_metadata.kind != "endpoint" || (var.gateway_metadata.name != null && var.gateway_metadata.name != "" && var.gateway_metadata.endpoint != null && var.gateway_metadata.endpoint != "")
+    error_message = "Both 'name' and 'endpoint' must be provided for an in-model (kind=endpoint) gateway_metadata integration."
+  }
+
+  validation {
+    condition     = var.gateway_metadata == null || var.gateway_metadata.kind != "offer" || (var.gateway_metadata.url != null && var.gateway_metadata.url != "")
+    error_message = "'url' must be provided for a cross-model (kind=offer) gateway_metadata integration."
   }
 }

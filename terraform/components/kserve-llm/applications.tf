@@ -14,8 +14,9 @@ resource "juju_application" "kserve_controller" {
   units       = var.kserve_controller.units
   trust       = var.kserve_controller.trust
   constraints = var.kserve_controller.constraints
-  config      = var.kserve_controller.config
-  resources   = var.kserve_controller.resources
+  # Force standard mode after caller config: this component deploys no Knative.
+  config    = merge(var.kserve_controller.config, { "deployment-mode" = "standard" })
+  resources = var.kserve_controller.resources
 }
 
 # KServe LLMISVC controller (reconciles LLMInferenceService resources).

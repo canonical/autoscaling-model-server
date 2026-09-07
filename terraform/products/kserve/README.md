@@ -20,8 +20,7 @@ It reuses [Charmed Kubeflow
 Solutions](https://github.com/canonical/charmed-kubeflow-solutions) components
 (`istio-sidecar` + `kserve` for serverless, `istio-ambient-dex` for standard),
 pinned to commit `7cf3c85bde844a060ec985c1b3aa97c57d3fa3fc` (the upstream
-repository has no tags). Standard mode additionally uses the local
-[`kserve-controller` component](../../components/kserve-controller).
+repository has no tags).
 
 ## Components
 
@@ -70,7 +69,8 @@ gateway namespace).
 | `model_uuid` | `string` | `null` | Existing model UUID when `create_model = false`. |
 | `cloud` | `string` | `null` | Kubernetes cloud to create the model on. |
 | `istio_default_gateway` | `string` | `"kserve-gateway"` | Istio gateway name shared with Knative. |
-| `istio_channel` | `string` | `"1.28/stable"` | Channel for the Istio charms. |
+| `istio_channel` | `string` | `"1.28/stable"` | Channel for the sidecar Istio charms (serverless). |
+| `istio_k8s_channel` | `string` | `"2/stable"` | Channel for the ambient Istio charms (standard). |
 | `knative_channel` | `string` | `"1.16/stable"` | Channel for the Knative charms. |
 | `kserve_channel` | `string` | `"latest/edge"` | Channel for kserve-controller. |
 | `*_revision` | `number` | `null` | Optional per-charm revision pins. |

@@ -4,8 +4,13 @@
 resource "juju_model" "kserve" {
   count = var.create_model ? 1 : 0
   name  = var.model_name
-  cloud {
-    name = var.cloud
+
+  # Only set the cloud when provided; otherwise Juju uses its default cloud.
+  dynamic "cloud" {
+    for_each = var.cloud != null ? [var.cloud] : []
+    content {
+      name = cloud.value
+    }
   }
 }
 
@@ -88,7 +93,9 @@ module "kserve" {
   kserve_controller = {
     channel  = var.kserve_channel
     revision = var.kserve_controller_revision
-    config   = merge({ "deployment-mode" = local.serverless ? "knative" : "standard" }, var.kserve_controller_config)
+    # deployment-mode is reserved (coupled to the istio topology), so merge it
+    # last — callers must not be able to override it into an inconsistent state.
+    config = merge(var.kserve_controller_config, { "deployment-mode" = local.serverless ? "knative" : "standard" })
   }
 
   knative_operator = {
