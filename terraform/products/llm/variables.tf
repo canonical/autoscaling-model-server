@@ -79,6 +79,12 @@ variable "self_signed_certificates_revision" {
   default     = null
 }
 
+variable "self_signed_certificates_config" {
+  description = "Extra config for self-signed-certificates"
+  type        = map(string)
+  default     = {}
+}
+
 variable "kserve_controller_revision" {
   description = "Charm revision for kserve-controller"
   type        = number

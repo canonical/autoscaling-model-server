@@ -32,9 +32,36 @@ module "envoy" {
     channel  = var.envoy_channel
     revision = var.envoy_ingress_k8s_revision
   }
-  self_signed_certificates = {
+}
+
+# TLS certificates for the Envoy AI Gateway ExtProc admission webhook, handled at
+# the product level (matching kubeflow) and wired into the envoy component.
+resource "juju_application" "self_signed_certificates" {
+  model_uuid = local.model_uuid
+  name       = "self-signed-certificates"
+
+  charm {
+    name     = "self-signed-certificates"
     channel  = var.self_signed_certificates_channel
     revision = var.self_signed_certificates_revision
+  }
+
+  config = var.self_signed_certificates_config
+  trust  = true
+  units  = 1
+}
+
+resource "juju_integration" "envoy_ai_controller_certificates" {
+  model_uuid = local.model_uuid
+
+  application {
+    name     = juju_application.self_signed_certificates.name
+    endpoint = "certificates"
+  }
+
+  application {
+    name     = module.envoy.requires.envoy_ai_controller_certificates.name
+    endpoint = module.envoy.requires.envoy_ai_controller_certificates.endpoint
   }
 }
 

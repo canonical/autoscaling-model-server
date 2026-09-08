@@ -51,18 +51,3 @@ variable "envoy_ingress_k8s" {
   })
   default = {}
 }
-
-variable "self_signed_certificates" {
-  description = "Configuration for the self-signed-certificates application (issues TLS certs to the Envoy stack)"
-  type = object({
-    app_name    = optional(string, "self-signed-certificates")
-    channel     = optional(string, "latest/stable")
-    revision    = optional(number)
-    units       = optional(number, 1)
-    trust       = optional(bool, false)
-    constraints = optional(string, "arch=amd64")
-    config      = optional(map(string), {})
-    resources   = optional(map(string), {})
-  })
-  default = {}
-}

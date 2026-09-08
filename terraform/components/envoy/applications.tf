@@ -1,24 +1,6 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-# Self-signed certificates authority. Issues the TLS serving cert the Envoy AI
-# Gateway ExtProc admission webhook requires (mandatory relation).
-resource "juju_application" "self_signed_certificates" {
-  charm {
-    name     = "self-signed-certificates"
-    channel  = var.self_signed_certificates.channel
-    revision = var.self_signed_certificates.revision
-  }
-
-  model_uuid  = var.model_uuid
-  name        = var.self_signed_certificates.app_name
-  units       = var.self_signed_certificates.units
-  trust       = var.self_signed_certificates.trust
-  constraints = var.self_signed_certificates.constraints
-  config      = var.self_signed_certificates.config
-  resources   = var.self_signed_certificates.resources
-}
-
 # Envoy Gateway control plane. Owns the Gateway API / Gateway Inference
 # Extension CRDs and reconciles the Envoy Proxy data plane.
 resource "juju_application" "envoy_controller_k8s" {

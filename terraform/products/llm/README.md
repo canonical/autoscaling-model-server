@@ -13,13 +13,18 @@ For the classic KServe serving configuration (Istio sidecar + Knative), see the
 
 | Module | Source | Role |
 | --- | --- | --- |
-| `envoy` | `../../components/envoy` | Envoy Gateway ingress + AI Gateway control plane + certificates. |
+| `envoy` | `../../components/envoy` | Envoy Gateway ingress + AI Gateway control plane. |
 | `kserve_llm` | `../../components/kserve-llm` | `kserve-controller` (standard mode) + `kserve-llmisvc` + `lws-controller`. |
+
+The product also deploys `self-signed-certificates` directly (like kubeflow) to
+issue the TLS serving cert the Envoy AI Gateway ExtProc admission webhook
+requires.
 
 ## Product-level wiring
 
 - `envoy-ingress-k8s:gateway-metadata` → `kserve-controller:gateway-metadata`
   (passed as the `gateway_metadata` input to the `kserve-llm` component).
+- `self-signed-certificates:certificates` → `envoy-ai-controller-k8s:certificates`.
 
 `llm-integrator` is intentionally not deployed; the end user deploys it and
 relates it to `kserve-llmisvc` via the component's `kserve_llmisvc_sync`

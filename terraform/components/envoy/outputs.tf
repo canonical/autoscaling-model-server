@@ -4,10 +4,9 @@
 output "components" {
   description = "Map of the deployed Envoy Gateway applications"
   value = {
-    self_signed_certificates = juju_application.self_signed_certificates
-    envoy_controller_k8s     = juju_application.envoy_controller_k8s
-    envoy_ai_controller_k8s  = juju_application.envoy_ai_controller_k8s
-    envoy_ingress_k8s        = juju_application.envoy_ingress_k8s
+    envoy_controller_k8s    = juju_application.envoy_controller_k8s
+    envoy_ai_controller_k8s = juju_application.envoy_ai_controller_k8s
+    envoy_ingress_k8s       = juju_application.envoy_ingress_k8s
   }
 }
 
@@ -55,6 +54,11 @@ output "requires" {
     envoy_ai_controller_otlp = {
       name     = juju_application.envoy_ai_controller_k8s.name
       endpoint = "otlp"
+    }
+    # TLS certificates for the ExtProc admission webhook (mandatory).
+    envoy_ai_controller_certificates = {
+      name     = juju_application.envoy_ai_controller_k8s.name
+      endpoint = "certificates"
     }
     # External authentication provider for the ingress gateway.
     envoy_ingress_forward_auth = {

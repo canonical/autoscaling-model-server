@@ -16,19 +16,3 @@ resource "juju_integration" "envoy_controller_extension_server" {
     endpoint = "envoy-extension-server"
   }
 }
-
-# TLS serving cert for the ExtProc admission webhook. This relation is
-# mandatory: envoy-ai-controller blocks until certificates are established.
-resource "juju_integration" "envoy_ai_controller_certificates" {
-  model_uuid = var.model_uuid
-
-  application {
-    name     = juju_application.envoy_ai_controller_k8s.name
-    endpoint = "certificates"
-  }
-
-  application {
-    name     = juju_application.self_signed_certificates.name
-    endpoint = "certificates"
-  }
-}

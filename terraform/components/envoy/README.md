@@ -12,7 +12,6 @@ once upstream Terraform modules exist.
 
 | Application | Charm | Role |
 | --- | --- | --- |
-| `self-signed-certificates` | `self-signed-certificates` | Issues the TLS serving cert the Envoy AI Gateway ExtProc admission webhook requires. |
 | `envoy-controller-k8s` | `envoy-controller-k8s` | Envoy Gateway control plane (Gateway API / Gateway Inference Extension CRDs). |
 | `envoy-ai-controller-k8s` | `envoy-ai-controller-k8s` | Envoy AI Gateway control plane; serves the Extension Server protocol. |
 | `envoy-ingress-k8s` | `envoy-ingress-k8s` | User-facing Gateway API resources; publishes gateway metadata. |
@@ -20,7 +19,11 @@ once upstream Terraform modules exist.
 ## Intra-component integrations
 
 - `envoy-controller-k8s:envoy-extension-server` ↔ `envoy-ai-controller-k8s:envoy-extension-server`
-- `envoy-ai-controller-k8s:certificates` ↔ `self-signed-certificates:certificates`
+
+TLS certificates for the ExtProc admission webhook (mandatory) are **not** part
+of this component — the consuming product supplies `certificates` and wires it to
+the `envoy_ai_controller_certificates` endpoint exposed in `requires` (matching
+how kubeflow handles self-signed-certificates at the product level).
 
 ## Inputs
 
@@ -30,10 +33,9 @@ once upstream Terraform modules exist.
 | `envoy_controller_k8s` | `object` | Configuration for `envoy-controller-k8s`. |
 | `envoy_ai_controller_k8s` | `object` | Configuration for `envoy-ai-controller-k8s`. |
 | `envoy_ingress_k8s` | `object` | Configuration for `envoy-ingress-k8s`. |
-| `self_signed_certificates` | `object` | Configuration for `self-signed-certificates`. |
 
 ## Outputs
 
 - `components` — map of the deployed `juju_application` resources.
 - `provides` — outbound endpoints (e.g. `envoy_ingress_gateway_metadata`, metrics and dashboard endpoints).
-- `requires` — inbound endpoints (`otlp` for both controllers, `forward-auth` for the ingress).
+- `requires` — inbound endpoints (`otlp` for both controllers, `certificates` for the AI controller, `forward-auth` for the ingress).
