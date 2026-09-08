@@ -7,11 +7,20 @@ output "model_uuid" {
 }
 
 output "envoy" {
-  description = "Outputs of the Envoy Gateway component (components, provides, requires)"
+  description = "Outputs of the Envoy Gateway control-plane component (components, provides, requires)"
   value = {
     components = module.envoy.components
     provides   = module.envoy.provides
     requires   = module.envoy.requires
+  }
+}
+
+output "envoy_ingress" {
+  description = "Outputs of the Envoy ingress component (components, provides, requires)"
+  value = {
+    components = module.envoy_ingress.components
+    provides   = module.envoy_ingress.provides
+    requires   = module.envoy_ingress.requires
   }
 }
 
@@ -21,6 +30,15 @@ output "kserve_llm" {
     components = module.kserve_llm.components
     provides   = module.kserve_llm.provides
     requires   = module.kserve_llm.requires
+  }
+}
+
+output "lws_controller" {
+  description = "Outputs of the lws-controller component (components, provides, requires)"
+  value = {
+    components = module.lws_controller.components
+    provides   = module.lws_controller.provides
+    requires   = module.lws_controller.requires
   }
 }
 

@@ -14,7 +14,7 @@ resource "juju_model" "llm" {
   }
 }
 
-# Envoy Gateway stack: ingress + AI Gateway control plane + certificates.
+# Envoy Gateway control plane (controller + AI Gateway controller).
 module "envoy" {
   source = "../../components/envoy"
 
@@ -28,6 +28,15 @@ module "envoy" {
     channel  = var.envoy_channel
     revision = var.envoy_ai_controller_k8s_revision
   }
+}
+
+# Envoy Gateway ingress (user-facing Gateway API resources). Reconciled by the
+# envoy control plane through the Gateway API CRDs (no direct Juju relation).
+module "envoy_ingress" {
+  source = "../../components/envoy-ingress"
+
+  model_uuid = local.model_uuid
+
   envoy_ingress_k8s = {
     channel  = var.envoy_channel
     revision = var.envoy_ingress_k8s_revision
@@ -69,7 +78,7 @@ resource "juju_integration" "envoy_ai_controller_certificates" {
 # ingress gateway so LLMInferenceService routes are exposed.
 module "kserve_llm" {
   source     = "../../components/kserve-llm"
-  depends_on = [module.envoy]
+  depends_on = [module.envoy_ingress]
 
   model_uuid = local.model_uuid
 
@@ -82,15 +91,38 @@ module "kserve_llm" {
     channel  = var.kserve_channel
     revision = var.kserve_llmisvc_revision
   }
+
+  gateway_metadata = {
+    kind     = "endpoint"
+    name     = module.envoy_ingress.provides.envoy_ingress_gateway_metadata.name
+    endpoint = module.envoy_ingress.provides.envoy_ingress_gateway_metadata.endpoint
+  }
+}
+
+# LeaderWorkerSet controller for multi-node inference workers.
+module "lws_controller" {
+  source = "../../components/lws-controller"
+
+  model_uuid = local.model_uuid
+
   lws_controller = {
     channel  = var.lws_controller_channel
     revision = var.lws_controller_revision
   }
+}
 
-  gateway_metadata = {
-    kind     = "endpoint"
-    name     = module.envoy.provides.envoy_ingress_gateway_metadata.name
-    endpoint = module.envoy.provides.envoy_ingress_gateway_metadata.endpoint
+# lws-controller feeds LeaderWorkerSet configuration to kserve-llmisvc.
+resource "juju_integration" "kserve_llmisvc_lws_controller" {
+  model_uuid = local.model_uuid
+
+  application {
+    name     = module.lws_controller.provides.lws_controller_sync.name
+    endpoint = module.lws_controller.provides.lws_controller_sync.endpoint
+  }
+
+  application {
+    name     = module.kserve_llm.requires.kserve_llmisvc_lws_controller.name
+    endpoint = module.kserve_llm.requires.kserve_llmisvc_lws_controller.endpoint
   }
 }
 
@@ -117,5 +149,5 @@ module "observability" {
   kserve_llmisvc_grafana_dashboard   = module.kserve_llm.provides.kserve_llmisvc_grafana_dashboard
   kserve_controller_logging          = module.kserve_llm.requires.kserve_controller_logging
   kserve_llmisvc_logging             = module.kserve_llm.requires.kserve_llmisvc_logging
-  lws_controller_logging             = module.kserve_llm.requires.lws_controller_logging
+  lws_controller_logging             = module.lws_controller.requires.lws_controller_logging
 }

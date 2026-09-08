@@ -36,22 +36,3 @@ resource "juju_application" "envoy_ai_controller_k8s" {
   config      = var.envoy_ai_controller_k8s.config
   resources   = var.envoy_ai_controller_k8s.resources
 }
-
-# Envoy Gateway ingress. Manages user-facing Gateway API resources (Gateway,
-# HTTPRoute, SecurityPolicy) and publishes gateway metadata to downstream
-# consumers such as kserve-controller.
-resource "juju_application" "envoy_ingress_k8s" {
-  charm {
-    name     = "envoy-ingress-k8s"
-    channel  = var.envoy_ingress_k8s.channel
-    revision = var.envoy_ingress_k8s.revision
-  }
-
-  model_uuid  = var.model_uuid
-  name        = var.envoy_ingress_k8s.app_name
-  units       = var.envoy_ingress_k8s.units
-  trust       = var.envoy_ingress_k8s.trust
-  constraints = var.envoy_ingress_k8s.constraints
-  config      = var.envoy_ingress_k8s.config
-  resources   = var.envoy_ingress_k8s.resources
-}

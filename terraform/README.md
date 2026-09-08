@@ -17,12 +17,14 @@ product configurations:
 ```
 terraform/
 ├── components/
-│   ├── envoy/         # Envoy Gateway stack (local, inline; service-mesh charms)
-│   ├── kserve-llm/    # kserve-controller (standard) + kserve-llmisvc + lws-controller
-│   └── observability/ # opentelemetry-collector-k8s + COS offers
+│   ├── envoy/          # Envoy Gateway control plane (envoy-controller + ai-controller)
+│   ├── envoy-ingress/  # Envoy Gateway ingress (envoy-ingress-k8s)
+│   ├── kserve-llm/     # kserve-controller (standard) + kserve-llmisvc
+│   ├── lws-controller/ # LeaderWorkerSet controller (multi-node inference)
+│   └── observability/  # opentelemetry-collector-k8s + COS offers
 ├── products/
 │   ├── kserve/        # serverless (sidecar+knative) OR standard (ambient); reuses kubeflow components
-│   └── llm/           # composes the envoy + kserve-llm (+ observability) components
+│   └── llm/           # composes the envoy + envoy-ingress + kserve-llm + lws-controller (+ observability) components
 └── deployments/
     └── llm-cos/       # deployment root: cos-lite + the llm product wired to COS
 ```

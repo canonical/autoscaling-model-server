@@ -6,7 +6,6 @@ output "components" {
   value = {
     kserve_controller = juju_application.kserve_controller
     kserve_llmisvc    = juju_application.kserve_llmisvc
-    lws_controller    = juju_application.lws_controller
   }
 }
 
@@ -51,9 +50,10 @@ output "requires" {
       name     = juju_application.kserve_llmisvc.name
       endpoint = "logging"
     }
-    lws_controller_logging = {
-      name     = juju_application.lws_controller.name
-      endpoint = "logging"
+    # kserve-llmisvc consumes lws-controller from the lws-controller component.
+    kserve_llmisvc_lws_controller = {
+      name     = juju_application.kserve_llmisvc.name
+      endpoint = "lws-controller"
     }
   }
 }

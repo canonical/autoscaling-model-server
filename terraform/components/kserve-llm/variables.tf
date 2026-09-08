@@ -37,21 +37,6 @@ variable "kserve_llmisvc" {
   default = {}
 }
 
-variable "lws_controller" {
-  description = "Configuration for the lws-controller application"
-  type = object({
-    app_name    = optional(string, "lws-controller")
-    channel     = optional(string, "latest/edge")
-    revision    = optional(number)
-    units       = optional(number, 1)
-    trust       = optional(bool, true)
-    constraints = optional(string, "arch=amd64")
-    config      = optional(map(string), {})
-    resources   = optional(map(string), {})
-  })
-  default = {}
-}
-
 variable "gateway_metadata" {
   description = <<-EOT
     Gateway metadata endpoint consumed by kserve-controller (from an Envoy or

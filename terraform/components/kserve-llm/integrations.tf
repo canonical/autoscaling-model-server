@@ -16,21 +16,6 @@ resource "juju_integration" "kserve_llmisvc_kserve_controller" {
   }
 }
 
-# lws-controller feeds LeaderWorkerSet configuration to kserve-llmisvc.
-resource "juju_integration" "kserve_llmisvc_lws_controller" {
-  model_uuid = var.model_uuid
-
-  application {
-    name     = juju_application.lws_controller.name
-    endpoint = "lws-controller"
-  }
-
-  application {
-    name     = juju_application.kserve_llmisvc.name
-    endpoint = "lws-controller"
-  }
-}
-
 # gateway-metadata: kserve-controller programs the ingress gateway (Envoy or
 # Istio) so LLMInferenceService routes are exposed. Supports same-model
 # endpoint or cross-model offer.
