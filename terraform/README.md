@@ -69,8 +69,12 @@ juju deploy llm-integrator --channel latest/edge --trust \
 juju integrate llm-integrator:kserve-llmisvc kserve-llmisvc:kserve-llmisvc
 ```
 
-## Linting
+## Linting & validation
 
 ```
-tox -e tflint
+tox -e lint            # terraform fmt -check + tflint (recursive)
+tox -e validate-kserve # terraform init + validate for the kserve product
+tox -e validate-llm    # ... the llm product
+tox -e validate-llm-cos
+tox -e fmt             # apply formatting + tflint --fix
 ```
