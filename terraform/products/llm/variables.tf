@@ -41,8 +41,14 @@ variable "self_signed_certificates_channel" {
   default     = "latest/stable"
 }
 
-variable "kserve_channel" {
-  description = "Charm channel for kserve-controller and kserve-llmisvc"
+variable "kserve_controller_channel" {
+  description = "Charm channel for kserve-controller"
+  type        = string
+  default     = "latest/edge"
+}
+
+variable "kserve_llmisvc_channel" {
+  description = "Charm channel for kserve-llmisvc"
   type        = string
   default     = "latest/edge"
 }

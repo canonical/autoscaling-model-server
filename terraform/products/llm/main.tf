@@ -83,12 +83,12 @@ module "kserve_llm" {
   model_uuid = local.model_uuid
 
   kserve_controller = {
-    channel  = var.kserve_channel
+    channel  = var.kserve_controller_channel
     revision = var.kserve_controller_revision
     config   = var.kserve_controller_config
   }
   kserve_llmisvc = {
-    channel  = var.kserve_channel
+    channel  = var.kserve_llmisvc_channel
     revision = var.kserve_llmisvc_revision
   }
 

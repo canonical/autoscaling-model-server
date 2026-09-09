@@ -1,10 +1,10 @@
 # KServe serving product
 
-This product deploys the classic **KServe serving** configuration. It supports
-two modes via `kserve_mode`:
+This product deploys the classic **KServe serving** configuration in either of
+the two modes KServe supports, selected via `kserve_mode`:
 
-- **`serverless`** (default) — Istio in **sidecar** mode + Knative serving +
-  the KServe control plane in `knative` mode.
+- **`knative`** (default) — Istio in **sidecar** mode + Knative serving +
+  the KServe control plane in `knative` deployment mode.
 - **`standard`** — Istio in **ambient** mode (istio-k8s + istio-ingress-k8s +
   istio-beacon-k8s) + `kserve-controller` in RawDeployment mode (no Knative).
   InferenceServices are exposed externally through the Gateway API
@@ -18,7 +18,7 @@ For the LLM inference serving configuration (Envoy + KServe LLM), see the
 
 It reuses [Charmed Kubeflow
 Solutions](https://github.com/canonical/charmed-kubeflow-solutions) components
-(`istio-sidecar` + `kserve` for serverless, `istio-ambient-dex` for standard),
+(`istio-sidecar` + `kserve` for knative, `istio-ambient-dex` for standard),
 pinned to commit `7cf3c85bde844a060ec985c1b3aa97c57d3fa3fc` (the upstream
 repository has no tags).
 
@@ -26,9 +26,9 @@ repository has no tags).
 
 | Module | Mode | Source | Role |
 | --- | --- | --- | --- |
-| `istio` | serverless | `charmed-kubeflow-solutions//terraform/components/istio-sidecar` | Istio control plane + ingress gateway (sidecar). |
+| `istio` | knative | `charmed-kubeflow-solutions//terraform/components/istio-sidecar` | Istio control plane + ingress gateway (sidecar). |
 | `istio_ambient` | standard | `charmed-kubeflow-solutions//terraform/components/istio-ambient-dex` | Ambient mesh: istio-k8s + istio-ingress-k8s + istio-beacon-k8s. |
-| `kserve` | both | `charmed-kubeflow-solutions//terraform/components/kserve` | KServe control plane; Knative is deployed only when `gateway_info` is set (serverless). |
+| `kserve` | both | `charmed-kubeflow-solutions//terraform/components/kserve` | KServe control plane; Knative is deployed only when `gateway_info` is set (knative). |
 
 The upstream `kserve` component is used for both modes — it deploys Knative only
 when `gateway_info` is provided, so standard mode (which passes `gateway_metadata`
@@ -36,7 +36,7 @@ when `gateway_info` is provided, so standard mode (which passes `gateway_metadat
 
 ## Product-level wiring
 
-- **serverless:** `istio-pilot:gateway-info` → `kserve-controller:ingress-gateway`
+- **knative:** `istio-pilot:gateway-info` → `kserve-controller:ingress-gateway`
   (the `kserve` component also wires `knative-serving:local-gateway` →
   `kserve-controller:local-gateway`).
 - **standard:** `istio-ingress-k8s:gateway-metadata` →
@@ -64,12 +64,12 @@ gateway namespace).
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `create_model` | `bool` | `true` | Create the Juju model or reuse an existing one. |
-| `kserve_mode` | `string` | `"serverless"` | `serverless` (Knative) or `standard` (RawDeployment, no Knative). |
+| `kserve_mode` | `string` | `"knative"` | `knative` (Knative) or `standard` (RawDeployment, no Knative). |
 | `model_name` | `string` | `"kserve"` | Model name (also used for the Knative gateway namespace). |
 | `model_uuid` | `string` | `null` | Existing model UUID when `create_model = false`. |
 | `cloud` | `string` | `null` | Kubernetes cloud to create the model on. |
 | `istio_default_gateway` | `string` | `"kserve-gateway"` | Istio gateway name shared with Knative. |
-| `istio_channel` | `string` | `"1.28/stable"` | Channel for the sidecar Istio charms (serverless). |
+| `istio_channel` | `string` | `"1.28/stable"` | Channel for the sidecar Istio charms (knative). |
 | `istio_k8s_channel` | `string` | `"2/stable"` | Channel for the ambient Istio charms (standard). |
 | `knative_channel` | `string` | `"1.16/stable"` | Channel for the Knative charms. |
 | `kserve_channel` | `string` | `"latest/edge"` | Channel for kserve-controller. |

@@ -1,16 +1,15 @@
 # Autoscaling model serving — Terraform
 
-Terraform modules for deploying the autoscaling model serving solution with the
-[Terraform Juju provider](https://github.com/juju/terraform-provider-juju/).
+Terraform modules for deploying the autoscaling model serving solution on top of
+the [Terraform Juju provider](https://github.com/juju/terraform-provider-juju/).
 
-The solution follows the Charm Terraform standards (CC008): reusable **charm**
-and **component** modules composed into **product** modules. There are two
-product configurations:
+The modules follow CC008: small **charm** and **component** modules composed into
+**product** modules. Two products live here:
 
 | Product | Path | What it deploys |
 | --- | --- | --- |
-| **KServe serving** | [`products/kserve`](products/kserve) | KServe control plane with a `kserve_mode` switch: `serverless` (Istio sidecar + Knative) or `standard` (Istio ambient, RawDeployment). No LLM charms. |
-| **LLM serving** | [`products/llm`](products/llm) | Envoy Gateway + KServe LLM serving (`kserve-controller` standard, `kserve-llmisvc`, `lws-controller`), with optional COS observability. |
+| **KServe serving** | [`products/kserve`](products/kserve) | The KServe control plane. Pick `knative` (Istio sidecar + Knative) or `standard` (Istio ambient, RawDeployment) with `kserve_mode`. No LLM charms. |
+| **LLM serving** | [`products/llm`](products/llm) | Envoy Gateway plus the KServe LLM stack (`kserve-controller`, `kserve-llmisvc`, `lws-controller`), optionally wired to COS. |
 
 ## Layout
 
@@ -23,28 +22,28 @@ terraform/
 │   ├── lws-controller/ # LeaderWorkerSet controller (multi-node inference)
 │   └── observability/  # opentelemetry-collector-k8s + COS offers
 ├── products/
-│   ├── kserve/        # serverless (sidecar+knative) OR standard (ambient); reuses kubeflow components
-│   └── llm/           # composes the envoy + envoy-ingress + kserve-llm + lws-controller (+ observability) components
+│   ├── kserve/        # knative (sidecar) OR standard (ambient); reuses kubeflow components
+│   └── llm/           # envoy + envoy-ingress + kserve-llm + lws-controller (+ observability)
 └── deployments/
-    └── llm-cos/       # deployment root: cos-lite + the llm product wired to COS
+    └── llm-cos/       # cos-lite + the llm product wired to COS
 ```
 
-- The **`kserve`** product reuses the `istio-sidecar`, `istio-ambient-dex` and
-  `kserve` components from [Charmed Kubeflow
-  Solutions](https://github.com/canonical/charmed-kubeflow-solutions), pinned to
-  a commit (the upstream repository has no tags).
-- The **`envoy`** component is local because the
-  [`service-mesh`](https://github.com/canonical/service-mesh) Envoy charms do not
-  yet ship Terraform modules; its applications are declared inline. It is
-  intended to be handed over to the service mesh team once upstream modules
-  exist.
+The `kserve` product doesn't reinvent Istio and KServe — it reuses the
+`istio-sidecar`, `istio-ambient-dex` and `kserve` components from [Charmed
+Kubeflow Solutions](https://github.com/canonical/charmed-kubeflow-solutions),
+pinned to a commit since that repository has no tags yet.
 
-All modules use the Juju provider `>= 1.1.1` and address models by
+The `envoy` component is kept local (its applications are declared inline)
+because the [service mesh](https://github.com/canonical/service-mesh) Envoy
+charms don't ship Terraform modules yet. Once they do, we plan to hand it over to
+the service mesh team.
+
+Everything uses the Juju provider `>= 1.1.1` and refers to models by
 `model_uuid`.
 
 ## Usage
 
-Pick a product and run Terraform from its directory:
+Change into a product directory and run Terraform from there:
 
 ```
 cd products/llm      # or products/kserve
@@ -52,15 +51,15 @@ terraform init
 terraform apply -var model_name=kserve-llm -var cloud=k8s
 ```
 
-To deploy into an existing model, set `-var create_model=false` and provide
-`-var model_uuid=<uuid>`.
-
-See each product's `README.md` for its full input/output reference.
+To target an existing model instead, pass `-var create_model=false` and
+`-var model_uuid=<uuid>`. Each product's `README.md` lists its full inputs and
+outputs.
 
 ## LLM serving: deploying models
 
-The `llm` product does not deploy `llm-integrator`. After apply, the end user
-relates it to `kserve-llmisvc` to serve a model:
+The `llm` product deliberately stops at the serving stack — it doesn't deploy
+`llm-integrator`. Once the product is up, relate `llm-integrator` to
+`kserve-llmisvc` to actually serve a model:
 
 ```
 juju deploy llm-integrator --channel latest/edge --trust \

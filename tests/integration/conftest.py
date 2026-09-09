@@ -9,10 +9,10 @@ import pytest
 # Maps a --scenario to the deployment model name, the Terraform root module to
 # apply (relative to the repository root), and the extra `-var` arguments.
 SCENARIOS = {
-    "kserve-serverless": {
+    "kserve-knative": {
         "model": "kserve",
         "module_path": "terraform/products/kserve",
-        "tf_vars": ["-var", "kserve_mode=serverless"],
+        "tf_vars": ["-var", "kserve_mode=knative"],
     },
     "kserve-standard": {
         "model": "kserve",
@@ -32,7 +32,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--scenario",
         choices=list(SCENARIOS),
-        default="kserve-serverless",
+        default="kserve-knative",
         help="Deployment scenario to test.",
     )
 

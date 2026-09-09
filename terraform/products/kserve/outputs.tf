@@ -7,8 +7,8 @@ output "model_uuid" {
 }
 
 output "istio" {
-  description = "Outputs of the active Istio component (components, provides, requires). In serverless mode this is the istio-sidecar component; in standard mode it is the istio-ambient component."
-  value = local.serverless ? {
+  description = "Outputs of the active Istio component (components, provides, requires). In knative mode this is the istio-sidecar component; in standard mode it is the istio-ambient component."
+  value = local.knative ? {
     components = module.istio[0].components
     provides   = module.istio[0].provides
     requires   = module.istio[0].requires
@@ -20,7 +20,7 @@ output "istio" {
 }
 
 output "kserve" {
-  description = "Outputs of the KServe component (components, provides, requires). Knative apps are present only in serverless mode."
+  description = "Outputs of the KServe component (components, provides, requires). Knative apps are present only in knative mode."
   value = {
     components = module.kserve.components
     provides   = module.kserve.provides

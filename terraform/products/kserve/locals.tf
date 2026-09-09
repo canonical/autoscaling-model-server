@@ -6,6 +6,6 @@ locals {
   # model or an existing one supplied by the caller.
   model_uuid = var.create_model ? juju_model.kserve[0].uuid : var.model_uuid
 
-  serverless = var.kserve_mode == "serverless"
-  standard   = var.kserve_mode == "standard"
+  knative  = var.kserve_mode == "knative"
+  standard = var.kserve_mode == "standard"
 }

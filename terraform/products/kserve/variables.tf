@@ -28,13 +28,13 @@ variable "cloud" {
 }
 
 variable "kserve_mode" {
-  description = "KServe serving mode: 'serverless' deploys Knative (istio sidecar gateway), 'standard' deploys kserve-controller in RawDeployment mode without Knative."
+  description = "KServe deployment mode, matching kserve-controller's deployment-mode config: 'knative' pairs with the Istio sidecar gateway and deploys Knative; 'standard' (RawDeployment) pairs with the ambient Istio gateway and deploys no Knative."
   type        = string
-  default     = "serverless"
+  default     = "knative"
 
   validation {
-    condition     = contains(["serverless", "standard"], var.kserve_mode)
-    error_message = "kserve_mode must be either \"serverless\" or \"standard\"."
+    condition     = contains(["knative", "standard"], var.kserve_mode)
+    error_message = "kserve_mode must be either \"knative\" or \"standard\"."
   }
 }
 
@@ -47,7 +47,7 @@ variable "istio_default_gateway" {
 # --- Per-charm channel overrides -------------------------------------------
 
 variable "istio_channel" {
-  description = "Charm channel for istio-pilot and istio-ingressgateway (serverless / sidecar mode)"
+  description = "Charm channel for istio-pilot and istio-ingressgateway (knative / sidecar mode)"
   type        = string
   default     = "1.28/stable"
 }

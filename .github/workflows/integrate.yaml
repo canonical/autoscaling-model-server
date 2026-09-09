@@ -47,9 +47,9 @@ jobs:
       fail-fast: false
       matrix:
         scenario:
-        - kserve-serverless  # istio-sidecar + knative + kserve
-        - kserve-standard    # istio-ambient + kserve-controller (RawDeployment)
-        - llm-cos            # envoy + kserve-llm + COS
+        - kserve-knative   # istio-sidecar + knative + kserve
+        - kserve-standard  # istio-ambient + kserve-controller (RawDeployment)
+        - llm-cos          # envoy + kserve-llm + COS
 
     steps:
       - name: Maximise GH runner space

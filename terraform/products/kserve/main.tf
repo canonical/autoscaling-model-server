@@ -15,11 +15,11 @@ resource "juju_model" "kserve" {
 }
 
 # Istio service mesh in sidecar mode (istio-pilot + istio-ingressgateway),
-# used by serverless mode. Reuses the Charmed Kubeflow Solutions component,
+# used by knative mode. Reuses the Charmed Kubeflow Solutions component,
 # pinned to a commit because the upstream repository has no tags. Terraform does
 # not allow variable interpolation in a module source, so the ref is inline.
 module "istio" {
-  count  = local.serverless ? 1 : 0
+  count  = local.knative ? 1 : 0
   source = "git::https://github.com/canonical/charmed-kubeflow-solutions//terraform/components/istio-sidecar?ref=7cf3c85bde844a060ec985c1b3aa97c57d3fa3fc"
 
   model_uuid = local.model_uuid
@@ -61,7 +61,7 @@ module "istio_ambient" {
 }
 
 # KServe control plane. Reuses the Charmed Kubeflow Solutions component for both
-# modes: Knative is deployed only when gateway_info is set (serverless/sidecar);
+# modes: Knative is deployed only when gateway_info is set (knative/sidecar);
 # standard mode passes gateway_metadata + service_mesh (ambient) instead, so no
 # Knative is deployed. This product intentionally omits the LLM serving charms.
 module "kserve" {
@@ -70,8 +70,8 @@ module "kserve" {
 
   model_uuid = local.model_uuid
 
-  # serverless: istio-pilot gateway-info (also gates Knative deployment).
-  gateway_info = local.serverless ? {
+  # knative: istio-pilot gateway-info (also gates Knative deployment).
+  gateway_info = local.knative ? {
     kind     = "endpoint"
     name     = module.istio[0].provides.istio_pilot_gateway_info.name
     endpoint = module.istio[0].provides.istio_pilot_gateway_info.endpoint
@@ -95,7 +95,7 @@ module "kserve" {
     revision = var.kserve_controller_revision
     # deployment-mode is reserved (coupled to the istio topology), so merge it
     # last — callers must not be able to override it into an inconsistent state.
-    config = merge(var.kserve_controller_config, { "deployment-mode" = local.serverless ? "knative" : "standard" })
+    config = merge(var.kserve_controller_config, { "deployment-mode" = var.kserve_mode })
   }
 
   knative_operator = {

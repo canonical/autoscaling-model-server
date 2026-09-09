@@ -74,7 +74,8 @@ To deploy into an existing model, set `create_model = false` and provide
 | `cloud` | `string` | `null` | Kubernetes cloud to create the model on. |
 | `envoy_channel` | `string` | `"latest/edge"` | Channel for the Envoy Gateway charms. |
 | `self_signed_certificates_channel` | `string` | `"latest/stable"` | Channel for self-signed-certificates. |
-| `kserve_channel` | `string` | `"latest/edge"` | Channel for kserve-controller and kserve-llmisvc. |
+| `kserve_controller_channel` | `string` | `"latest/edge"` | Channel for kserve-controller. |
+| `kserve_llmisvc_channel` | `string` | `"latest/edge"` | Channel for kserve-llmisvc. |
 | `lws_controller_channel` | `string` | `"latest/edge"` | Channel for lws-controller. |
 | `*_revision` | `number` | `null` | Optional per-charm revision pins. |
 | `kserve_controller_config` | `map(string)` | `{}` | Extra kserve-controller config merged over defaults. |

@@ -17,7 +17,7 @@ providers:
         # can each get a LoadBalancer IP (the llm-cos scenario needs a second one).
         cidrs: 10.64.140.40/29
     bootstrap-constraints:
-      root-disk: 20G
+      root-disk: 4G
 
   lxd:
     enable: true
