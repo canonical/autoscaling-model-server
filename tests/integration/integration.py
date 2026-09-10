@@ -23,11 +23,16 @@ COS_SAAS = [
 @pytest.mark.dependency()
 def test_apply_terraform_solution(solution_module_path, tf_vars):
     """Initialize and apply the selected Terraform root module."""
-    # Each test owns its (freshly created) model; drop any local state left over
-    # from a previous run so the apply always starts clean.
+    # Each test run gets a freshly created model (new UUID), but the local
+    # backend keeps terraform.tfstate in the module dir between runs. Leftover
+    # state points at the previous model's resources and breaks the apply, so
+    # drop it — logging loudly in case it held state someone still needed.
     module = pathlib.Path(solution_module_path)
     for stale in ("terraform.tfstate", "terraform.tfstate.backup"):
-        (module / stale).unlink(missing_ok=True)
+        state_file = module / stale
+        if state_file.exists():
+            logger.warning("Removing leftover Terraform state: %s", state_file)
+            state_file.unlink()
 
     subprocess.run(["terraform", "init"], check=True, cwd=solution_module_path)
     subprocess.run(

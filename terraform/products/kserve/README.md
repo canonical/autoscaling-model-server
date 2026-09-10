@@ -19,8 +19,8 @@ For the LLM inference serving configuration (Envoy + KServe LLM), see the
 It reuses [Charmed Kubeflow
 Solutions](https://github.com/canonical/charmed-kubeflow-solutions) components
 (`istio-sidecar` + `kserve` for knative, `istio-ambient-dex` for standard),
-pinned to commit `7cf3c85bde844a060ec985c1b3aa97c57d3fa3fc` (the upstream
-repository has no tags).
+pinned to a commit because the upstream repository has no tags (see `main.tf`
+for the exact ref).
 
 ## Components
 
@@ -69,10 +69,7 @@ gateway namespace).
 | `model_uuid` | `string` | `null` | Existing model UUID when `create_model = false`. |
 | `cloud` | `string` | `null` | Kubernetes cloud to create the model on. |
 | `istio_default_gateway` | `string` | `"kserve-gateway"` | Istio gateway name shared with Knative. |
-| `istio_channel` | `string` | `"1.28/stable"` | Channel for the sidecar Istio charms (knative). |
-| `istio_k8s_channel` | `string` | `"2/stable"` | Channel for the ambient Istio charms (standard). |
-| `knative_channel` | `string` | `"1.16/stable"` | Channel for the Knative charms. |
-| `kserve_channel` | `string` | `"latest/edge"` | Channel for kserve-controller. |
+| `*_channel` | `string` | see defaults | Per-charm channels: `istio_channel` `1.28/stable`, `istio_k8s_channel` `2/stable`, `knative_channel` `1.16/stable`, `kserve_channel` `latest/edge`. |
 | `*_revision` | `number` | `null` | Optional per-charm revision pins. |
 | `kserve_controller_config` | `map(string)` | `{}` | Extra kserve-controller config merged over defaults. |
 

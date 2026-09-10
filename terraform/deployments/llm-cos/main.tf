@@ -1,7 +1,7 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-# COS Lite deployed in its own model. Mirrors the kubeflow-cos test scenario:
+# COS Lite deployed in its own model.
 # the LLM serving stack is wired to COS via the cross-model offers below.
 resource "juju_model" "cos" {
   count = var.create_cos_model ? 1 : 0
