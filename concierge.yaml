@@ -13,9 +13,11 @@ providers:
       load-balancer:
         enabled: true
         l2-mode: true
-        cidrs: 10.64.140.43/32
+        # /29 (8 addresses) so both the serving gateway and cos-lite's traefik
+        # can each get a LoadBalancer IP (the llm-cos scenario needs a second one).
+        cidrs: 10.64.140.40/29
     bootstrap-constraints:
-      root-disk: 2G
+      root-disk: 4G
 
   lxd:
     enable: true

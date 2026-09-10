@@ -4,11 +4,33 @@ on:
   workflow_call:
 
 jobs:
-  terraform-checks:
-    name: Terraform
-    uses: canonical/charmed-kubeflow-workflows/.github/workflows/terraform-checks-solution.yaml@main
-    with:
-      module-path: terraform/
+  terraform-lint:
+    name: Terraform fmt & tflint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo snap install terraform --classic
+      - run: sudo snap install tflint
+      - run: pipx install tox
+      - run: cd terraform && tox -e lint
+
+  terraform-validate:
+    name: Terraform validate
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # Each root module is validated separately: after removing the flat
+        # module, terraform/ has no root .tf files of its own.
+        module:
+          - kserve
+          - llm
+          - llm-cos
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo snap install terraform --classic
+      - run: pipx install tox
+      - run: cd terraform && tox -e validate-${{ matrix.module }}
 
   lint:
     name: Linting
@@ -22,10 +44,12 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
-        kserve-mode:
-        - knative  # formerly "serverless"
-        - standard  # formerly "rawdeployment"
+        scenario:
+        - kserve-knative   # istio-sidecar + knative + kserve
+        - kserve-standard  # istio-ambient + kserve-controller (RawDeployment)
+        - llm-cos          # envoy + kserve-llm + COS
 
     steps:
       - name: Maximise GH runner space
@@ -44,10 +68,29 @@ jobs:
           sudo snap install concierge --classic
           sudo concierge prepare --trace
 
-      - name: Run integration tests with KServe in ${{ matrix.kserve-mode }} mode
+      # Ambient Istio (kserve-standard) needs Cilium tuned to coexist with the
+      # Istio CNI. See https://docs.cilium.io/en/stable/network/servicemesh/istio/
+      - name: Configure Cilium for Istio ambient
+        if: matrix.scenario == 'kserve-standard'
         run: |
-          juju add-model inference-test
-          tox -e integration -- --kserve-mode ${{ matrix.kserve-mode }} --model inference-test
+          kubectl -n kube-system patch configmap cilium-config --type merge --patch '{"data":{"bpf-lb-sock-hostns-only":"true"}}'
+          kubectl -n kube-system patch configmap cilium-config --type merge --patch '{"data":{"cni-exclusive":"false"}}'
+          kubectl -n kube-system rollout restart daemonset cilium
 
-      - run: juju status --model inference-test
+      - name: Run integration test for the ${{ matrix.scenario }} scenario
+        run: |
+          tox -e integration -- --scenario ${{ matrix.scenario }}
+
+      - name: Dump juju status on failure
         if: failure()
+        run: |
+          for m in kserve kserve-llm cos; do
+            echo "=== model: $m ==="
+            juju status --model "$m" --relations 2>/dev/null || true
+          done
+
+      - name: Dump debug artifacts on failure
+        if: failure()
+        uses: canonical/kubeflow-ci/actions/dump-charm-debug-artifacts@main
+        with:
+          artifact-prefix: ${{ matrix.scenario }}

@@ -75,19 +75,16 @@ codespell = "^2.3.0"
 pyright = "^1.1.386"
 black = "^23.12.1"
 pytest = "^8.3.3"
-pytest-operator = ">0.30"
+jubilant = "^1.8.0"
 
 # integration tests
 [tool.poetry.group.integration]
 optional = true
 
 [tool.poetry.group.integration.dependencies]
-juju = "<4.0"
-lightkube = "^0.17.1"
+jubilant = "^1.8.0"
+pytest = "^8.3.3"
 pytest-dependency = "^0.6.1"
-pytest-operator = "^0.42.0"
-pyyaml = "^6.0.2"
-requests = "^2.32.3"
 tenacity = "^9.0.0"
 
 [build-system]

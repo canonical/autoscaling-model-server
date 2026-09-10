@@ -1,46 +1,79 @@
-# Autoscaling model serving Terraform solution
+# Autoscaling model serving — Terraform
 
+Terraform modules for deploying the autoscaling model serving solution on top of
+the [Terraform Juju provider](https://github.com/juju/terraform-provider-juju/).
 
-This is a Terraform module facilitating the deployment of the Autoscaling model serving solution, using the [Terraform juju provider](https://github.com/juju/terraform-provider-juju/). For more information, refer to the provider [documentation](https://registry.terraform.io/providers/juju/juju/latest/docs). 
+The modules follow CC008: small **charm** and **component** modules composed into
+**product** modules. Two products live here:
 
-## API
+| Product | Path | What it deploys |
+| --- | --- | --- |
+| **KServe serving** | [`products/kserve`](products/kserve) | The KServe control plane. Pick `knative` (Istio sidecar + Knative) or `standard` (Istio ambient, RawDeployment) with `kserve_mode`. No LLM charms. |
+| **LLM serving** | [`products/llm`](products/llm) | Envoy Gateway plus the KServe LLM stack (`kserve-controller`, `kserve-llmisvc`, `lws-controller`), optionally wired to COS. |
 
-### Inputs
-The solution module offers the following configurable inputs:
+## Layout
 
-| Name | Type | Description | Required |
-| - | - | - | - |
-| `risk`| string | Risk for all charm channels | False |
-| `<charm_name>_revision`| number | For each charm of the solution, the revision of the charm to deploy | False |
-| `create_model`| bool | Whether to create a model or reuse one created in a higher level module | False |
-| `model`| string | Name of the Juju model for deployment | False |
-| `cos_configuration`| bool | Boolean value that enables COS configuration | False |
-| `existing_grafana_agent_name`| string | Name of an existing grafana-agent-k8s deployment | False |
-| `istio_default_gateway`| string | Name of the Istio default ingress gateway | False |
-| `kserve_mode` | string | KServe's deployment mode | False |
+```
+terraform/
+├── components/
+│   ├── envoy/          # Envoy Gateway control plane (envoy-controller + ai-controller)
+│   ├── envoy-ingress/  # Envoy Gateway ingress (envoy-ingress-k8s)
+│   ├── kserve-llm/     # kserve-controller (standard) + kserve-llmisvc
+│   ├── lws-controller/ # LeaderWorkerSet controller (multi-node inference)
+│   └── observability/  # opentelemetry-collector-k8s + COS offers
+├── products/
+│   ├── kserve/        # knative (sidecar) OR standard (ambient); reuses kubeflow components
+│   └── llm/           # envoy + envoy-ingress + kserve-llm + lws-controller (+ observability)
+└── deployments/
+    └── llm-cos/       # cos-lite + the llm product wired to COS
+```
 
-### Outputs
-Upon applied, the solution module exports the following outputs:
+The `kserve` product doesn't reinvent Istio and KServe — it reuses the
+`istio-sidecar`, `istio-ambient-dex` and `kserve` components from [Charmed
+Kubeflow Solutions](https://github.com/canonical/charmed-kubeflow-solutions),
+pinned to a commit since that repository has no tags yet.
 
-| Name | Description |
-| - | - |
-| `grafana_agent_k8s`| Map containing the `app_name`, `provides` and `requires` endpoints of the grafana-agent-k8s charm used |
+The `envoy` component is kept local (its applications are declared inline)
+because the [service mesh](https://github.com/canonical/service-mesh) Envoy
+charms don't ship Terraform modules yet. Once they do, we plan to hand it over to
+the service mesh team.
+
+Everything uses the Juju provider `>= 1.1.1` and refers to models by
+`model_uuid`.
 
 ## Usage
 
-This solution module is intended to be used either on its own or as part of a higher-level module. 
+Change into a product directory and run Terraform from there:
 
-### COS configuration
-
-#### Enable COS configuration
-The `cos_configuration` input enables the solution to configure the solution's components to integrate with COS. This is done by deploying a `grafana-agent-k8s` charm and adding all the required relations.
 ```
-terraform apply -var cos_configuration=true
+cd products/llm      # or products/kserve
+terraform init
+terraform apply -var model_name=kserve-llm -var cloud=k8s
 ```
 
-#### Use an existing grafana-agent-k8s
-If there is already an instance of the grafana-agent-k8s charm in the deployed model, then it can be used instead of deploying a new one. This is achieved with the use of `existing_grafana_agent_name` input. By default, its value is `null`.
+To target an existing model instead, pass `-var create_model=false` and
+`-var model_uuid=<uuid>`. Each product's `README.md` lists its full inputs and
+outputs.
+
+## LLM serving: deploying models
+
+The `llm` product deliberately stops at the serving stack — it doesn't deploy
+`llm-integrator`. Once the product is up, relate `llm-integrator` to
+`kserve-llmisvc` to actually serve a model:
+
 ```
-terraform apply -var cos_configuration=true -var existing_grafana_agent_name="dummy-grafana-agent"
+juju deploy llm-integrator --channel latest/edge --trust \
+  --config model-uri="hf://EleutherAI/pythia-70m" \
+  --config model-name="EleutherAI/pythia-70m"
+juju integrate llm-integrator:kserve-llmisvc kserve-llmisvc:kserve-llmisvc
 ```
-> :warning: Setting this input without `cos_configuration` will not have any effect.
+
+## Linting & validation
+
+```
+tox -e lint            # terraform fmt -check + tflint (recursive)
+tox -e validate-kserve # terraform init + validate for the kserve product
+tox -e validate-llm    # ... the llm product
+tox -e validate-llm-cos
+tox -e fmt             # apply formatting + tflint --fix
+```
